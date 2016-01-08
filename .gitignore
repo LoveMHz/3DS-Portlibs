@@ -1,6 +1,5 @@
-freetype-*
-libexif-*
-libjpeg-*
-libpng-*
-sqlite-*
-zlib-*
+# Ignore everything but the root files
+*/*
+
+# Ignore Downloads
+*.tar.gz
