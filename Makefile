@@ -41,6 +41,16 @@ ZLIB_VERSION         := $(ZLIB)-1.2.8
 ZLIB_SRC             := $(ZLIB_VERSION).tar.gz
 ZLIB_DOWNLOAD        := "http://prdownloads.sourceforge.net/libpng/zlib-1.2.8.tar.gz"
 
+SDL                  := SDL
+SDL_VERSION          := $(SDL)-mirror-SDL12_3DS
+SDL_SRC              := $(SDL_VERSION).tar.gz
+SDL_DOWNLOAD         := "https://github.com/LoveMHz/SDL-mirror/archive/SDL12_3DS.tar.gz"
+
+SDLIMAGE             := SDL_image
+SDLIMAGE_VERSION     := $(SDLIMAGE)-1.2.12
+SDLIMAGE_SRC         := $(SDLIMAGE_VERSION).tar.gz
+SDLIMAGE_DOWNLOAD    := "https://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz"
+
 export PORTLIBS        := $(DEVKITPRO)/portlibs/armv6k
 export PATH            := $(DEVKITARM)/bin:$(PATH)
 export PKG_CONFIG_PATH := $(PORTLIBS)/lib/pkgconfig
@@ -56,8 +66,10 @@ export LDFLAGS         := -L$(PORTLIBS)/lib
         $(LIBJPEGTURBO) \
         $(LIBPNG) \
         $(SQLITE) \
-        $(ZLIB)
-all: zlib install-zlib libconfig install-libconfig freetype libexif libjpeg-turbo libpng sqlite install
+        $(ZLIB) \
+        $(SDL) \
+        $(SDLIMAGE)
+all: zlib install-zlib libconfig install-libconfig freetype libexif libjpeg-turbo libpng sqlite sdl sdlimage install
 	@echo "Finished!"
 
 old_all:
@@ -69,6 +81,8 @@ old_all:
 	@echo "  $(LIBPNG) (requires zlib to be installed)"
 	@echo "  $(SQLITE)"
 	@echo "  $(ZLIB)"
+	@echo "  $(SDL)"
+	@echo "  $(SDLIMAGE)"
 
 $(LIBCONFIG): $(LIBCONFIG_SRC)
 	@[ -d $(LIBCONFIG_VERSION) ] || tar -xf $<
@@ -114,6 +128,24 @@ $(ZLIB): $(ZLIB_SRC)
 	 CHOST=arm-none-eabi ./configure --static --prefix=$(PORTLIBS)
 	@$(MAKE) -C $(ZLIB_VERSION)
 
+$(SDL): $(SDL_SRC)
+	@[ -d $(SDL_VERSION) ] || tar -xf $<
+	@cd $(SDL_VERSION) && \
+     ./autogen.sh && \
+	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --with-platform=3ds --disable-shared --enable-static
+	@$(MAKE) -C $(SDL_VERSION)
+
+$(SDLIMAGE): $(SDLIMAGE_SRC)
+	@[ -d $(SDLIMAGE_VERSION) ] || tar -xf $<
+	@cd $(SDLIMAGE_VERSION) && \
+     sed -i '/noinst_PROGRAMS = showimage/c\#noinst_PROGRAMS = showimage' Makefile.am && \
+     ./autogen.sh && \
+	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static --disable-sdltest --disable-webp \
+     	SDL_CFLAGS="$(shell $(PORTLIBS)/bin/sdl-config --cflags)" \
+     	SDL_LIBS="$(shell $(PORTLIBS)/bin/sdl-config --libs)" \
+        PNG_LIBS="$(shell $(PORTLIBS)/bin/libpng-config --static --ldflags)" \
+        PNG_CFLAGS="$(shell $(PORTLIBS)/bin/libpng-config --cflags)" \
+
 # Downloads
 $(LIBCONFIG_SRC):
 	wget -O $@ $(LIBCONFIG_DOWNLOAD)
@@ -136,6 +168,12 @@ $(LIBPNG_SRC):
 $(SQLITE_SRC):
 	wget -O $@ $(SQLITE_DOWNLOAD)
 
+$(SDL_SRC):
+	wget -O $@ $(SDL_DOWNLOAD)
+
+$(SDLIMAGE_SRC):
+	wget -O $@ $(SDLIMAGE_DOWNLOAD)
+
 install-zlib:
 	@$(MAKE) -C $(ZLIB_VERSION) install
 
@@ -149,6 +187,8 @@ install:
 	@[ ! -d $(LIBJPEGTURBO_VERSION) ] || $(MAKE) -C $(LIBJPEGTURBO_VERSION) install
 	@[ ! -d $(LIBPNG_VERSION) ] || $(MAKE) -C $(LIBPNG_VERSION) install
 	@[ ! -d $(SQLITE_VERSION) ] || $(MAKE) -C $(SQLITE_VERSION) install-libLTLIBRARIES install-data
+	@[ ! -d $(SDL_VERSION) ] || $(MAKE) -C $(SDL_VERSION) install
+	@[ ! -d $(SDLIMAGE_VERSION) ] || $(MAKE) -C $(SDLIMAGE_VERSION) install
 
 clean:
 	@$(RM) -r $(LIBCONFIG_VERSION)
