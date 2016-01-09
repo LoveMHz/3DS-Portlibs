@@ -159,7 +159,7 @@ $(SDLMIXER): $(SDLMIXER_SRC)
 	@cd $(SDLMIXER_VERSION) && \
      sed -i 's/$$(objects)\/playwave$$(EXE) $$(objects)\/playmus$$(EXE)//' Makefile.in && \
      ./autogen.sh && \
-	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static --disable-sdltest --disable-music-mod --disable-music-mp3 --disable-music-mp3-shared \
+	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static --disable-sdltest --disable-music-cmd --disable-music-mod --disable-music-mp3 --disable-music-mp3-shared \
      	SDL_CFLAGS="$(shell $(PORTLIBS)/bin/sdl-config --cflags)" \
      	SDL_LIBS="$(shell $(PORTLIBS)/bin/sdl-config --libs)"
 	@$(MAKE) -C $(SDLMIXER_VERSION)
