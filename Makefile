@@ -51,6 +51,11 @@ SDLIMAGE_VERSION     := $(SDLIMAGE)-1.2.12
 SDLIMAGE_SRC         := $(SDLIMAGE_VERSION).tar.gz
 SDLIMAGE_DOWNLOAD    := "https://www.libsdl.org/projects/SDL_image/release/SDL_image-1.2.12.tar.gz"
 
+SDLMIXER             := SDL_mixer
+SDLMIXER_VERSION     := $(SDLMIXER)-1.2.12
+SDLMIXER_SRC         := $(SDLMIXER_VERSION).tar.gz
+SDLMIXER_DOWNLOAD    := "https://www.libsdl.org/projects/SDL_mixer/release/SDL_mixer-1.2.12.tar.gz"
+
 export PORTLIBS        := $(DEVKITPRO)/portlibs/armv6k
 export PATH            := $(DEVKITARM)/bin:$(PATH)
 export PKG_CONFIG_PATH := $(PORTLIBS)/lib/pkgconfig
@@ -68,8 +73,9 @@ export LDFLAGS         := -L$(PORTLIBS)/lib
         $(SQLITE) \
         $(ZLIB) \
         $(SDL) \
-        $(SDLIMAGE)
-all: zlib install-zlib libconfig install-libconfig freetype libexif libjpeg-turbo libpng sqlite sdl sdlimage install
+        $(SDLIMAGE) \
+        $(SDLMIXER)
+all: zlib install-zlib libconfig install-libconfig freetype libexif libjpeg-turbo libpng sqlite sdl sdlimage sdlmixer install
 	@echo "Finished!"
 
 old_all:
@@ -83,6 +89,7 @@ old_all:
 	@echo "  $(ZLIB)"
 	@echo "  $(SDL)"
 	@echo "  $(SDLIMAGE)"
+	@echo "  $(SDLMIXER)"
 
 $(LIBCONFIG): $(LIBCONFIG_SRC)
 	@[ -d $(LIBCONFIG_VERSION) ] || tar -xf $<
@@ -99,7 +106,7 @@ $(FREETYPE): $(FREETYPE_SRC)
 $(LIBEXIF): $(LIBEXIF_SRC)
 	@[ -d $(LIBEXIF_VERSION) ] || tar -xf $<
 	@cd $(LIBEXIF_VERSION) && \
-	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static
+	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static 
 	@$(MAKE) -C $(LIBEXIF_VERSION)
 
 $(LIBJPEGTURBO): $(LIBJPEGTURBO_SRC)
@@ -144,7 +151,18 @@ $(SDLIMAGE): $(SDLIMAGE_SRC)
      	SDL_CFLAGS="$(shell $(PORTLIBS)/bin/sdl-config --cflags)" \
      	SDL_LIBS="$(shell $(PORTLIBS)/bin/sdl-config --libs)" \
         PNG_LIBS="$(shell $(PORTLIBS)/bin/libpng-config --static --ldflags)" \
-        PNG_CFLAGS="$(shell $(PORTLIBS)/bin/libpng-config --cflags)" \
+        PNG_CFLAGS="$(shell $(PORTLIBS)/bin/libpng-config --cflags)"
+	@$(MAKE) -C $(SDLIMAGE_VERSION)
+        
+$(SDLMIXER): $(SDLMIXER_SRC)
+	@[ -d $(SDLMIXER_VERSION) ] || tar -xf $<
+	@cd $(SDLMIXER_VERSION) && \
+     sed -i 's/$$(objects)\/playwave$$(EXE) $$(objects)\/playmus$$(EXE)//' Makefile.in && \
+     ./autogen.sh && \
+	 ./configure --prefix=$(PORTLIBS) --host=arm-none-eabi --disable-shared --enable-static --disable-sdltest --disable-music-mod --disable-music-mp3 --disable-music-mp3-shared \
+     	SDL_CFLAGS="$(shell $(PORTLIBS)/bin/sdl-config --cflags)" \
+     	SDL_LIBS="$(shell $(PORTLIBS)/bin/sdl-config --libs)"
+	@$(MAKE) -C $(SDLMIXER_VERSION)
 
 # Downloads
 $(LIBCONFIG_SRC):
@@ -173,6 +191,9 @@ $(SDL_SRC):
 
 $(SDLIMAGE_SRC):
 	wget -O $@ $(SDLIMAGE_DOWNLOAD)
+    
+$(SDLMIXER_SRC):
+	wget -O $@ $(SDLMIXER_DOWNLOAD)
 
 install-zlib:
 	@$(MAKE) -C $(ZLIB_VERSION) install
@@ -189,6 +210,7 @@ install:
 	@[ ! -d $(SQLITE_VERSION) ] || $(MAKE) -C $(SQLITE_VERSION) install-libLTLIBRARIES install-data
 	@[ ! -d $(SDL_VERSION) ] || $(MAKE) -C $(SDL_VERSION) install
 	@[ ! -d $(SDLIMAGE_VERSION) ] || $(MAKE) -C $(SDLIMAGE_VERSION) install
+	@[ ! -d $(SDLMIXER_VERSION) ] || $(MAKE) -C $(SDLMIXER_VERSION) install
 
 clean:
 	@$(RM) -r $(LIBCONFIG_VERSION)
